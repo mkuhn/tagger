@@ -1,7 +1,7 @@
 CC     = g++
-CFLAGS = -fpic -Wall -O3 -std=c++11
-LFLAGS = -fpic -shared -lboost_regex
-PYTHON = -I/usr/include/python2.7 -I/usr/include/python
+CFLAGS = -fpic -Wall -O3 -std=c++11  -I/home/mkuhn/anaconda3/include/  -L/home/mkuhn/anaconda3/lib -Wl,-rpath,/home/mkuhn/anaconda3/lib
+LFLAGS = -fpic -shared -L/home/mkuhn/anaconda3/lib -lboost_regex 
+PYTHON = -I/home/mkuhn/anaconda3/include/python3.6m
 
 all: tagger_swig.py _tagger_swig.so libtagger.so libtagger.a tagcorpus cleandict environments organisms species
 
@@ -13,7 +13,7 @@ clean:
 #
 tagger_swig.py tagger_swig_wrap.cxx: tagger_swig.i tagger.h
 	swig -python -c++ -threads $<
-	
+
 tagger.o: tagger.cxx acronyms.h tagger.h tagger_types.h tagger_core.h acronyms.h hash.h tokens.h
 	$(CC) $(CFLAGS) -c $<
 
