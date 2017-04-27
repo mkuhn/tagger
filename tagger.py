@@ -16,7 +16,7 @@ if PY3:
 else:
 	import urlparse
 
-import tagger_swig
+from . import tagger_swig
 
 
 def entity_dict(qtype, qid):
@@ -189,7 +189,7 @@ class Tagger:
 			mapping = {}
 			byte = 0
 			char = 0
-			u_document = document.decode("utf8")
+			u_document = document.decode("utf8") if not PY3 else document
 			for b in u_document:
 				u = b.encode("utf8")
 				char_bytes = len(u)
