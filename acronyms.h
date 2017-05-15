@@ -11,16 +11,19 @@
 using namespace std;
 using namespace boost;
 
-class Acronyms : public unordered_map<const char*, const char*, OrthographHash, OrthographHash::EqualString>
+typedef unordered_map<const char*, const char*, OrthographHash, OrthographHash::EqualString> ACRONYMS;
+
+class Acronyms : public ACRONYMS
 {
 	private:
 		boost::regex re[2];
-		
+
 	public:
 		Acronyms();
 		~Acronyms();
-		
+
 	public:
+		void clear();
 		void add(const char* document);
 };
 
@@ -40,6 +43,15 @@ Acronyms::~Acronyms()
 		delete it->first;
 		delete it->second;
 	}
+}
+
+void Acronyms::clear()
+{
+	for (Acronyms::iterator it = this->begin(); it != this->end(); ++it) {
+		delete it->first;
+		delete it->second;
+	}
+	ACRONYMS::clear();
 }
 
 void Acronyms::add(const char* document)

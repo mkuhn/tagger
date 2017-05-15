@@ -37,7 +37,7 @@ class Match
 		int stop;
 		int size;
 		Entity* entities;
-	
+
 	public:
 		Match()
 		{
@@ -46,12 +46,12 @@ class Match
 			this->size  = -1;
 			this->entities = NULL;
 		}
-		
+
 		~Match()
 		{
 			free(this->entities);
 		}
-		
+
 };
 
 class Matches: public vector<Match*> {

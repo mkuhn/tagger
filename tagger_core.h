@@ -76,6 +76,12 @@ Tagger::~Tagger()
 {
 }
 
+void Tagger::new_document()
+{
+	this->document_acronyms.clear();
+}
+
+
 void Tagger::add_name(const char* name, int type, const char* identifier)
 {
 	size_t n = 0;
@@ -121,12 +127,26 @@ void Tagger::add_name(const char* name, int type, int serial)
 {
 }
 
+void Tagger::add_document_acronym(const char* name, const char* acronym)
+{
+	size_t n = strlen(name)+1;
+	char* name_copy = new char[n];
+	memcpy(name_copy, name, n);
+
+	n = strlen(acronym)+1;
+	char* acronym_copy = new char[n];
+	memcpy(acronym_copy, acronym, n);
+
+	this->document_acronyms.insert(pair<const char*, const char*>(acronym_copy, name_copy));
+}
+
+
 void Tagger::allow_block_name(const char* name, const char* document_id, bool block)
 {
 	size_t n = 0;
 	char* name_copy = NULL;
 	char* document_id_copy = NULL;
-	
+
 	if (document_id == NULL) {
 		NAME_BOOL::iterator b = global.find(name);
 		if (b == global.end()) {
@@ -529,7 +549,7 @@ void Tagger::trim_boundaries(const char* document, int& start, int& stop)
 	}
 }
 
-void Tagger::find_matches(Matches& matches, Acronyms& acronyms, Tokens& tokens, char* document, const char* document_id, const GetMatchesParams& params, const unordered_set<int>& entity_types)
+void Tagger::find_matches(Matches& matches, Tokens& tokens, char* document, const char* document_id, const GetMatchesParams& params, const unordered_set<int>& entity_types)
 {
 	for (Tokens::iterator it = tokens.begin(); it != tokens.end(); ++it) {
 		int tsize = (*it).size();
@@ -547,9 +567,9 @@ void Tagger::find_matches(Matches& matches, Acronyms& acronyms, Tokens& tokens, 
 				char replaced = document[end];
 				document[end] = '\0';
 				bool match_found = false;
-				Acronyms::iterator search1 = acronyms.find(document+start);
+				Acronyms::iterator search1 = this->document_acronyms.find(document+start);
 				DICTIONARY::iterator search2;
-				if (search1 != acronyms.end()) {
+				if (search1 != this->document_acronyms.end()) {
 					name = (char *)search1->second;
 				}
 				search2 = this->names.find(name);
@@ -620,10 +640,14 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 	int str_len = strlen(document);
 	const char* from = document;
 	const char* last = document + str_len;
-	Acronyms acronyms;
 	Tokens tokens;
 	Matches matches;
 	matches.serials_only = this->serials_only;
+
+	if (params.find_acronyms) {
+		this->document_acronyms.clear();
+	}
+
 	// -----------------------------------------------------------
 	// Protect HTML tags by finding them via a regular expression.
 	// Tokenize the text before each match and the text after the
@@ -644,7 +668,7 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 					char replaced = *(tag[0].first);
 					*(char*)(tag[0].first) = '\0';
 					if (params.find_acronyms) {
-						acronyms.add(from);
+						this->document_acronyms.add(from);
 					}
 					tokens.add(document, from-document, params);
 					*(char*)(tag[0].first) = replaced;
@@ -667,7 +691,7 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 						char replaced = *((char*)reflect[2].second);
 						*((char*)reflect[2].second) = '\0';
 						if (params.find_acronyms) {
-							acronyms.add(from);
+							this->document_acronyms.add(from);
 						}
 						tokens.add(document, reflect[2].first-document, params);
 						*((char*)reflect[2].second) = replaced;
@@ -692,7 +716,7 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 	}
 	if (from < last) {
 		if (params.find_acronyms) {
-			acronyms.add(from);
+			this->document_acronyms.add(from);
 		}
 		tokens.add(document, from-document, params);
 	}
@@ -703,7 +727,7 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 	if (params.auto_detect) {
 		entity_types.insert(-3);
 		Matches entity_type_matches;
-		this->find_matches(entity_type_matches, acronyms, tokens, document, document_id, params, entity_types);
+		this->find_matches(entity_type_matches, tokens, document, document_id, params, entity_types);
 		entity_types.clear();
 		for (Matches::iterator it = entity_type_matches.begin(); it < entity_type_matches.end(); ++it) {
 			Entity* p = (**it).entities;
@@ -723,7 +747,7 @@ Matches Tagger::get_matches(char* document, char* document_id, const GetMatchesP
 	for (vector<int>::const_iterator n = params.entity_types.begin(); n != params.entity_types.end(); ++n) {
 		entity_types.insert(*n);
 	}
-	this->find_matches(matches, acronyms, tokens, document, document_id, params, entity_types);
+	this->find_matches(matches, tokens, document, document_id, params, entity_types);
 	return matches;
 }
 

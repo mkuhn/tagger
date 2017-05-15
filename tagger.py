@@ -158,13 +158,19 @@ class Tagger:
 			self.blocked_documents_lock.release()
 			self.save_changelog("BlockName", name, document_id)
 
+	def add_document_acronym(self, name, acronym):
+		return self.cpp_tagger.add_document_acronym(name, acronym)
+
+	def new_document(self):
+		return self.cpp_tagger.new_document()
+
 	def check_name(self, name, entity_type, entity_identifier):
 		return self.cpp_tagger.check_name(name, int(entity_type), entity_identifier)
 
 	def is_blocked(self, name, document_id):
 		return self.cpp_tagger.is_blocked(document_id, name)
 
-	def get_matches(self, document, document_id, entity_types, auto_detect=True, allow_overlap=False, protect_tags=True, max_tokens=5, tokenize_characters=False, ignore_blacklist=False, utf8_coordinates=False):
+	def get_matches(self, document, document_id, entity_types, auto_detect=True, allow_overlap=False, protect_tags=True, max_tokens=5, tokenize_characters=False, ignore_blacklist=False, utf8_coordinates=False, find_acronyms = True):
 		if not PY3:
 			if isinstance(document, unicode):
 				document = document.encode("utf8")
@@ -182,6 +188,7 @@ class Tagger:
 		params.allow_overlap = allow_overlap
 		params.protect_tags = protect_tags
 		params.max_tokens = max_tokens
+		params.find_acronyms = find_acronyms
 		params.tokenize_characters = tokenize_characters
 		params.ignore_blacklist = ignore_blacklist
 		matches = self.cpp_tagger.get_matches(document, document_id, params)
